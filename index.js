@@ -3,27 +3,25 @@
 import express from "express";
 import { config } from "dotenv";
 import bookRouter from "./routes/book.js";
-import mongoose from "mongoose";
+import userRouter from "./routes/user.js";
+import { connectToDB } from "./config/dbConfig.js";
 
 config();//envכך גרמנו שנוד ידע כבר עכשיו לחפש בקובץ ששמו נקודה 
 //כאשר אנו כותבים את המילה process.env
+connectToDB();
 
 
 const app = express();
-const mongoURI = process.env.DB_CONNECTION || "mongodb://localhost:27017/library";
-mongoose.connect(mongoURI)
-    .then((suc) => { console.log("mongo db connected sucessfully!!!", suc.connection.host) })
-    .catch(err => {
-        console.log("cannot connect mongoDB")
-        console.log(err)
-        process.exit(1);//סוגר את התכונית שאנחנו מתחילים להריץ בכישלון
-    })
-
-
 app.use(express.json())
 
 app.use("/api/book", bookRouter);
+app.use("/api/user", userRouter);
 
+
+app.use((err, req, res, next) => {
+    res.status(res.statusCode || 500);
+    res.send(err.message || "התרחשה תקלה")
+})
 
 
 let port = process.env.PORT || 4000;

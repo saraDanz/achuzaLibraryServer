@@ -1,20 +1,28 @@
 //בקונטרולר נרשוםפ את הקוד עצמו שמטפל במסד נתונים 
 //בראוטר נזמן את הפונקציות מכאן
-import { Book } from "../models/book.js";//אות ראשונה גדולה למודל
+import { Book, bookValidator } from "../models/book.js";//אות ראשונה גדולה למודל
 import mongoose from "mongoose";
 
 export const getAllBooks = async (req, res) => {
+    //params-פרמטרים שהם חובה כלומר אם לא יישלחו הכתובת לא מזוהה
+    ///query  -> queryparams פרמטרים אופציונלים
+    let { search, numPages, page, perPage } = req.query;//
 
-    // Book.find({})
-    //     .then((allbooks) => {
-    //         res.json(allbooks)
-    //         console.log("finish")
-    //     })
-    //     .catch(err => { res.status(400).send("Nצטערים") })
+    //http://localhost:4000/users/1
+    //http://localhost:4000/users?name=2&age=15
 
 
     try {
-        let allbooks = await Book.find({}) //שליפת כל הספרים מהמסד נתונים
+        let allbooks;
+        let serachObject = {};
+        if (search)
+            serachObject.name = new RegExp(search, "i");
+        if (numPages)
+            serachObject.numPages = numPages
+        //שליפת כל הספרים מהמסד נתונים
+        allbooks = await Book.find(serachObject)//.sort({ name: -1, numPages: 1 })
+            .skip((page - 1) * perPage)
+            .limit(perPage);
         res.json(allbooks)
     }
     catch (err) {
@@ -74,20 +82,49 @@ export const updateBook = async (req, res) => {
 
 export const addBook = async (req, res) => {
     let { name, numPages, isComix, publishDate } = req.body;
-    if (!name || !numPages)
-        return res.status(404).send("missing parameters name or numPAges");
+    // if (!name || !numPages)
+    //     return res.status(404).send("missing parameters name or numPAges");
+    let validate = bookValidator(req.body);
+    if (validate.error)
+        return res.status(400).send(validate.error[0])
+
     try {
 
         let sameBooks = await Book.find({ numPages, name });
         if (sameBooks.length > 0)
             return res.status(409).send("כבר קיים ספר בשם כזה עם אות ומספר עמודים")
 
-        let newBook = Book.create({ name, numPages, isComix: isComix || false, publishDate })
-        await newBook.save();
+        let newBook = await Book.create({ name, numPages, isComix: isComix || false, publishDate })
+
+
+        // let newBook = new Book({ name, numPages, isComix: isComix || false, publishDate })
+        // await newBook.save();
 
         return res.status(201).json(newBook)
     }
     catch (err) {
         res.status(400).send("אא להוסיף" + err)
+    }
+}
+
+export const booksBetween = async (req, res) => {
+
+    let { from, to, perPage, page } = req.query;//
+
+    try {
+        let serachObject = {};
+        if (from)
+            serachObject.numPages = { $gte: from }
+        if (to)
+            serachObject.numPages = { $lte: to }
+
+        //   let  allbooks = await Book.find({ numPages: { $gte: from }, numPages: { $lte: to } })
+        let allbooks = await Book.find(serachObject)
+            .skip((page - 1) * perPage)
+            .limit(perPage);
+        res.json(allbooks)
+    }
+    catch (err) {
+        res.status(400).send("לא ניתן לקבל את כל הספרים" + err.message)
     }
 }
