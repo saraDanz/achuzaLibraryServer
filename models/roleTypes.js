@@ -1,3 +1,3 @@
-export const MANAGER = "MANAGER";
+export const ADMIN = "ADMIN";
 export const USER = "USER";
-export const PRIMIUM = "PRIMIUM";
+export const PREMIUM = "PREMIUM";

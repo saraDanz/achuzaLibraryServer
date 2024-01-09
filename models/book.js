@@ -6,7 +6,12 @@ const bookSchema = mongoose.Schema({
     name: { type: String, required: true },
     numPages: Number,
     isComix: Boolean,
-    publishDate: { type: Date, default: Date.now() }
+    publishDate: { type: Date, default: Date.now() },
+    imgUrl: { type: String, default: "http://localhost:5000/books/pic1.jpg" },
+    userAdded: String
+
+
+
 
 })
 

@@ -1,3 +1,4 @@
+import { generateToken } from "../config/jwt.js";
 import { User } from "../models/user.js";
 import bcrypt from "bcryptjs";
 
@@ -12,7 +13,9 @@ export const addUser = async (req, res) => {
 
         let newUser = new User({ userName, password: hashedPassword, email });
         await newUser.save();
-        res.json(newUser);
+        let { _id, userName: y, roles, email: e } = newUser;
+        let token = generateToken(newUser);
+        res.json({ _id, roles, userName: y, token, email: e });
     }
     catch (err) {
         res.status(500).send("an error occured in....")
@@ -36,8 +39,10 @@ export const login = async (req, res) => {
 
         if (!await bcrypt.compare(password, loggedInUser.password))
             return res.status(404).send("no user with such credentials")
-        let { userName: u, _id, email } = loggedInUser;
-        res.json({ userName: u, _id, email });
+        let { userName: u, _id, email, roles } = loggedInUser;
+        let token = generateToken(loggedInUser);
+        res.json({ _id, roles, userName: u, token, email });
+
     }
     catch (err) {
         res.status(500).send("an error occured in....")

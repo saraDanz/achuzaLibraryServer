@@ -48,6 +48,10 @@ export const deleteBook = async (req, res) => {
     if (!mongoose.isValidObjectId(id))
         return res.status(400).send("not valid id");
 
+
+    let book = await Book.findById(id);
+    if (book.userAdded != req.xxxuser._id)
+        return res.status(403).send("you cannot delete books you didn add")
     let deletedBook = await Book.findByIdAndDelete(id)
     if (!deletedBook)
         return res.status(404).send("לא נמצא ספר עם כזה קוד למחיקה")
@@ -86,7 +90,7 @@ export const addBook = async (req, res) => {
     //     return res.status(404).send("missing parameters name or numPAges");
     let validate = bookValidator(req.body);
     if (validate.error)
-        return res.status(400).send(validate.error[0])
+        return res.status(400).json(validate.error.details[0])
 
     try {
 
@@ -94,7 +98,7 @@ export const addBook = async (req, res) => {
         if (sameBooks.length > 0)
             return res.status(409).send("כבר קיים ספר בשם כזה עם אות ומספר עמודים")
 
-        let newBook = await Book.create({ name, numPages, isComix: isComix || false, publishDate })
+        let newBook = await Book.create({ userAdded: req.xxxuser._id, name, numPages, isComix: isComix || false, publishDate })
 
 
         // let newBook = new Book({ name, numPages, isComix: isComix || false, publishDate })
